@@ -83,7 +83,7 @@ def send_to_feishu(
     mode: str = "daily",
     account_label: str = "",
     *,
-    batch_size: int = 29000,
+    batch_size: int = 8000,
     batch_interval: float = 1.0,
     split_content_func: Callable = None,
     get_time_func: Callable = None,
@@ -118,6 +118,9 @@ def send_to_feishu(
     proxies = None
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
+
+    # 飞书卡片有总大小限制，强制 cap batch_size
+    batch_size = min(batch_size, 8000)
 
     # 日志前缀
     log_prefix = f"飞书{account_label}" if account_label else "飞书"
