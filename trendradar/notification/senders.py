@@ -181,8 +181,11 @@ def send_to_feishu(
         }
 
         try:
+            # ensure_ascii=False 避免中文被转为 \uXXXX 导致体积翻倍超限
             response = requests.post(
-                webhook_url, headers=headers, json=payload, proxies=proxies, timeout=30
+                webhook_url, headers=headers,
+                data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                proxies=proxies, timeout=30
             )
             if response.status_code == 200:
                 result = response.json()
