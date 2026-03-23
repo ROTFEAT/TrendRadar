@@ -167,21 +167,30 @@ def send_to_feishu(
         )
 
         # 飞书 webhook 使用卡片消息格式（支持 markdown 渲染）
+        # 按分隔线拆分内容为多个 markdown 元素，避免超出飞书卡片限制
+        separator = "━━━━━━━━━━━━━━━━"
+        chunks = batch_content.split(separator)
+        elements = []
+        current = ""
+        for chunk in chunks:
+            candidate = current + (separator if current else "") + chunk
+            if len(candidate) > 3500 and current:
+                elements.append({"tag": "markdown", "content": current})
+                current = chunk.lstrip("\n")
+            else:
+                current = candidate
+        if current:
+            elements.append({"tag": "markdown", "content": current})
+
         payload = {
             "msg_type": "interactive",
             "card": {
                 "config": {"wide_screen_mode": True},
-                "elements": [
-                    {
-                        "tag": "markdown",
-                        "content": batch_content,
-                    }
-                ],
+                "elements": elements,
             },
         }
 
         try:
-            # ensure_ascii=False 避免中文被转为 \uXXXX 导致体积翻倍超限
             response = requests.post(
                 webhook_url, headers=headers,
                 data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
